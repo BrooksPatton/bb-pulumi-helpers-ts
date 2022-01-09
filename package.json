@@ -1,0 +1,32 @@
+{
+  "name": "bb-pulumi-helpers-ts",
+  "version": "1.0.0",
+  "description": "Helper functions for working with Pulumi using Typescript",
+  "main": "index.ts",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BrooksPatton/bb-pulumi-helpers-ts.git"
+  },
+  "author": "Brooks Patton",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/BrooksPatton/bb-pulumi-helpers-ts/issues"
+  },
+  "homepage": "https://github.com/BrooksPatton/bb-pulumi-helpers-ts#readme",
+  "devDependencies": {
+    "@types/jest": "^27.4.0",
+    "@typescript-eslint/eslint-plugin": "^5.9.0",
+    "@typescript-eslint/parser": "^5.9.0",
+    "eslint": "^8.6.0",
+    "jest": "^27.4.7",
+    "ts-jest": "^27.1.2",
+    "typescript": "^4.5.4"
+  },
+  "dependencies": {
+    "@pulumi/aws": "^4.33.1",
+    "@pulumi/pulumi": "^3.21.1"
+  }
+}
