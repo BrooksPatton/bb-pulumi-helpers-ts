@@ -164,6 +164,46 @@ describe("Pulumi Helpers", () => {
             expect(tags.CreatedBy).toBe(createdByTag);
         });
     });
+
+    describe("private subnet", () => {
+        let urn;
+        let cidrBlock;
+        let vpcId;
+        let availabilityZone;
+        let mapPublicIpOnLaunch;
+        let tags;
+        const expectedCidrBlock = "10.0.1.0/24";
+        let expectedVpcId;
+        const expectedAvailabilityZone = "a";
+
+        beforeAll(async () => {
+            const vpc = await createVpc();
+            const subnet: Subnet = await createSubnet(expectedCidrBlock, vpc, expectedAvailabilityZone);
+            [
+                urn, 
+                mapPublicIpOnLaunch, 
+                tags
+            ] = await convertPulumiOutputs([
+                subnet.urn,
+                subnet.mapPublicIpOnLaunch,
+                subnet.tags
+            ]);
+        });
+
+        test("urn should be a good name", () => {
+            expect(urn).toContain(
+                `private - ${stack} - ${region}${expectedAvailabilityZone}`
+            );
+        });
+
+        test("subnet should be private", () => {
+            expect(mapPublicIpOnLaunch).toBe(false);
+        });
+
+        test("name tag should be set", () => {
+            expect(tags.Name).toBe(`private - ${region}${expectedAvailabilityZone}`);
+        });
+    });
 });
 
 function convertPulumiOutputs(pulumiOutputs: Output<any>[]): Promise<any[]> {
