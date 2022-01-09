@@ -1,7 +1,7 @@
 import * as pulumi from "@pulumi/pulumi";
 import { Output } from "@pulumi/pulumi";
 import { MockCallArgs, MockResourceArgs } from "@pulumi/pulumi/runtime";
-import {createVpc} from "../index";
+import {createVpc, createInternetGateway} from "../index";
 
 const region = "test-region";
 const stack = "test-stack";
@@ -63,6 +63,40 @@ describe("Pulumi Helpers", () => {
 
         test("created by pulumi tag should be set", () => {
             expect(tags.CreatedBy).toBe(createdByTag);
+        });
+    });
+
+    describe("internet gateway", () => {
+        let urn;
+        let tags;
+        let vpcId;
+        let expectedVpcId;
+
+        beforeAll(async () => {
+            const vpc = await createVpc();
+            const internetGateway = await createInternetGateway(vpc);
+            [urn, tags, vpcId, expectedVpcId] = await convertPulumiOutputs([
+                internetGateway.urn,
+                internetGateway.tags,
+                internetGateway.vpcId,
+                vpc.id
+            ]);
+        });
+
+        test("urn is set to a good name", () => {
+            expect(urn).toContain(`${stack} - ${region}`);
+        });
+
+        test("name tag is set to the stack", () => {
+            expect(tags.Name).toBe(stack);
+        });
+
+        test("created by tag is set", () => {
+            expect(tags.CreatedBy).toBe(createdByTag);
+        });
+
+        test("associated with the provided vpc", () => {
+            expect(vpcId).toBe(expectedVpcId);
         });
     });
 });
