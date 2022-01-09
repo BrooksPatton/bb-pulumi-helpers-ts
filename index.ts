@@ -1,5 +1,5 @@
 import { getRegion } from "@pulumi/aws";
-import { InternetGateway, Vpc } from "@pulumi/aws/ec2";
+import { InternetGateway, Subnet, Vpc } from "@pulumi/aws/ec2";
 import { getStack } from "@pulumi/pulumi";
 
 const createdByTag = "Pulumi";
@@ -26,5 +26,26 @@ export async function createInternetGateway(vpc: Vpc): Promise<InternetGateway> 
             CreatedBy: createdByTag,
         },
         vpcId: vpc.id
+    });
+}
+
+export async function createSubnet(
+    cidrBlock: string, 
+    vpc: Vpc, 
+    availabilityZone: string, 
+    isPublic = false
+): Promise<Subnet> {
+    const region = await getRegion();
+    const stack = getStack();
+    const name = `${isPublic ? "public" : "private"} - ${stack} - ${region.name}${availabilityZone}`;
+    return new Subnet(name, {
+        cidrBlock,
+        vpcId: vpc.id,
+        availabilityZone: `${region.name}${availabilityZone}`,
+        mapPublicIpOnLaunch: isPublic,
+        tags: {
+            Name: `${isPublic ? "public" : "private"} - ${region.name}${availabilityZone}`,
+            CreatedBy: createdByTag
+        }
     });
 }

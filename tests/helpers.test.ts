@@ -1,7 +1,8 @@
+import { Subnet } from "@pulumi/aws/ec2";
 import * as pulumi from "@pulumi/pulumi";
 import { Output } from "@pulumi/pulumi";
 import { MockCallArgs, MockResourceArgs } from "@pulumi/pulumi/runtime";
-import {createVpc, createInternetGateway} from "../index";
+import {createVpc, createInternetGateway, createSubnet} from "../index";
 
 const region = "test-region";
 const stack = "test-stack";
@@ -97,6 +98,70 @@ describe("Pulumi Helpers", () => {
 
         test("associated with the provided vpc", () => {
             expect(vpcId).toBe(expectedVpcId);
+        });
+    });
+
+    describe("public subnet", () => {
+        let urn;
+        let cidrBlock;
+        let vpcId;
+        let availabilityZone;
+        let mapPublicIpOnLaunch;
+        let tags;
+        const expectedCidrBlock = "10.0.1.0/24";
+        let expectedVpcId;
+        const expectedAvailabilityZone = "a";
+
+        beforeAll(async () => {
+            const vpc = await createVpc();
+            const subnet: Subnet = await createSubnet(expectedCidrBlock, vpc, expectedAvailabilityZone, true);
+            [
+                urn, 
+                cidrBlock, 
+                vpcId, 
+                availabilityZone, 
+                mapPublicIpOnLaunch, 
+                tags,
+                expectedVpcId
+            ] = await convertPulumiOutputs([
+                subnet.urn,
+                subnet.cidrBlock,
+                subnet.vpcId,
+                subnet.availabilityZone,
+                subnet.mapPublicIpOnLaunch,
+                subnet.tags,
+                vpc.id
+            ]);
+        });
+
+        test("urn should be a good name", () => {
+            expect(urn).toContain(
+                `public - ${stack} - ${region}${expectedAvailabilityZone}`
+            );
+        });
+
+        test("cidr block should be set", () => {
+            expect(cidrBlock).toBe(expectedCidrBlock);
+        });
+
+        test("subnet should be associated with the provided vpc", () => {
+            expect(vpcId).toBe(expectedVpcId);
+        });
+
+        test("subnet should be in the provided availability zone", () => {
+            expect(availabilityZone).toBe(`${region}${expectedAvailabilityZone}`);
+        });
+
+        test("subnet should be public", () => {
+            expect(mapPublicIpOnLaunch).toBe(true);
+        });
+
+        test("name tag should be set", () => {
+            expect(tags.Name).toBe(`public - ${region}${expectedAvailabilityZone}`);
+        });
+
+        test("Created by tag should be set", () => {
+            expect(tags.CreatedBy).toBe(createdByTag);
         });
     });
 });
