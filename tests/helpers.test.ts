@@ -1,8 +1,15 @@
-import { Subnet, RouteTable } from "@pulumi/aws/ec2";
+import { Subnet, RouteTable, RouteTableAssociation } from "@pulumi/aws/ec2";
 import * as pulumi from "@pulumi/pulumi";
 import { Output } from "@pulumi/pulumi";
 import { MockCallArgs, MockResourceArgs } from "@pulumi/pulumi/runtime";
-import {createVpc, createInternetGateway, createSubnet, createRouteTable} from "../index";
+import {
+    createVpc, 
+    createInternetGateway, 
+    createSubnet, 
+    createRouteTable,
+    createRouteTableAssociation
+} from "../aws";
+import { convertPulumiOutputs } from "../utilities";
 
 const region = "test-region";
 const stack = "test-stack";
@@ -28,7 +35,7 @@ pulumi.runtime.setMocks({
     }
 }, "testing", stack);
 
-describe("Pulumi Helpers", () => {
+describe("aws Pulumi Helpers", () => {
     describe("vpc", () => {
         let urn;
         let cidrBlock;
@@ -260,14 +267,52 @@ describe("Pulumi Helpers", () => {
             expect(tags.CreatedBy).toBe(createdByTag);
         });
     });
-});
 
-function convertPulumiOutputs(pulumiOutputs: Output<any>[]): Promise<any[]> {
-    return new Promise((resolve, reject) => {
-        try {
-            pulumi.all(pulumiOutputs).apply(resolve);
-        } catch (error) {
-            reject(error);
-        }
+    describe("associating public subnet with route table", () => {
+        let urn: string;
+        let routeTableId: string;
+        let expectedRouteTableId: string;
+        let subnetId: string;
+        let expectedSubnetId: string;
+        let subnetUrn: string;
+        let routeTableUrn: string;
+
+        beforeAll(async () => {
+            const vpc = await createVpc();
+            const internetGateway = await createInternetGateway(vpc);
+            const routeTable = await createRouteTable(vpc, internetGateway);
+            const subnet = await createSubnet("10.0.1.0/24", vpc, "a");
+            const routeTableAssociation: RouteTableAssociation = await createRouteTableAssociation(routeTable, subnet);
+
+            [
+                urn,
+                routeTableId,
+                expectedRouteTableId,
+                subnetId,
+                expectedSubnetId,
+                subnetUrn,
+                routeTableUrn,
+            ] = await convertPulumiOutputs([
+                routeTableAssociation.urn,
+                routeTableAssociation.routeTableId,
+                routeTable.id,
+                routeTableAssociation.subnetId,
+                subnet.id,
+                subnet.urn,
+                routeTable.urn,
+            ]);
+        });
+
+        test("route table association has a name that makes sense", () => {
+            expect(urn).toContain(`${subnetUrn} -> ${routeTableUrn}`);
+        });
+
+        test("the route table association is associated with the provided route table", () => {
+            expect(routeTableId).toBe(expectedRouteTableId);
+        });
+
+        test("the route table association is associated with the provided subnet", () => {
+            expect(subnetId).toBe(expectedSubnetId);
+        });
     });
-}
+});
