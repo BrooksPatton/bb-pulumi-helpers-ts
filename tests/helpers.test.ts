@@ -1,8 +1,8 @@
-import { Subnet } from "@pulumi/aws/ec2";
+import { Subnet, RouteTable } from "@pulumi/aws/ec2";
 import * as pulumi from "@pulumi/pulumi";
 import { Output } from "@pulumi/pulumi";
 import { MockCallArgs, MockResourceArgs } from "@pulumi/pulumi/runtime";
-import {createVpc, createInternetGateway, createSubnet} from "../index";
+import {createVpc, createInternetGateway, createSubnet, createRouteTable} from "../index";
 
 const region = "test-region";
 const stack = "test-stack";
@@ -202,6 +202,62 @@ describe("Pulumi Helpers", () => {
 
         test("name tag should be set", () => {
             expect(tags.Name).toBe(`private - ${region}${expectedAvailabilityZone}`);
+        });
+    });
+
+    describe("route table", () => {
+        let urn;
+        let vpcId;
+        let expectedVpcId;
+        let routes: any[];
+        let tags;
+        let expectedGatewayId;
+        let routeTable;
+
+        beforeAll(async () => {
+            const vpc = await createVpc();
+            const internetGateway = await createInternetGateway(vpc);
+            routeTable = await createRouteTable(vpc, internetGateway);
+            [
+                urn,
+                vpcId,
+                expectedVpcId,
+                routes,
+                tags,
+            ] = await convertPulumiOutputs([
+                routeTable.urn,
+                routeTable.vpcId,
+                vpc.id,
+                routeTable.routes,
+                routeTable.tags,
+            ]);
+        });
+
+        test("route table has a good name", () => {
+            expect(urn).toContain(`${stack} - ${region}`);
+        });
+
+        test("route table is associated with the provided vpc", () => {
+            expect(vpcId).toBe(expectedVpcId);
+        });
+
+        test("route table has a route to the internet", async () => {
+            routes.forEach(async route => {
+                const [cidrBlock, gatewayId] = await convertPulumiOutputs([
+                    route.cidrBlock,
+                    route.gatewayId
+                ]);
+                expect(cidrBlock).toBe("0.0.0.0/0");
+                expect(gatewayId).toBe(expectedGatewayId);
+            });
+        });
+
+        test("name tag should be set", () => {
+            expect(tags.Name).toBe(stack);
+        });
+
+        test("created by tag should be set", () => {
+            expect(tags.CreatedBy).toBe(createdByTag);
         });
     });
 });

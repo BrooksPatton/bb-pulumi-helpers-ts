@@ -1,5 +1,5 @@
 import { getRegion } from "@pulumi/aws";
-import { InternetGateway, Subnet, Vpc } from "@pulumi/aws/ec2";
+import { InternetGateway, RouteTable, Subnet, Vpc } from "@pulumi/aws/ec2";
 import { getStack } from "@pulumi/pulumi";
 
 const createdByTag = "Pulumi";
@@ -45,6 +45,23 @@ export async function createSubnet(
         mapPublicIpOnLaunch: isPublic,
         tags: {
             Name: `${isPublic ? "public" : "private"} - ${region.name}${availabilityZone}`,
+            CreatedBy: createdByTag
+        }
+    });
+}
+
+export async function createRouteTable(vpc: Vpc, internetGateway: InternetGateway): Promise<RouteTable> {
+    const region = await getRegion();
+    const stack = getStack();
+
+    return new RouteTable(`${stack} - ${region.name}`, {
+        vpcId: vpc.id,
+        routes: [{
+            cidrBlock: "0.0.0.0/0",
+            gatewayId: internetGateway.id
+        }],
+        tags: {
+            Name: stack,
             CreatedBy: createdByTag
         }
     });
