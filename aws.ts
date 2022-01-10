@@ -1,5 +1,5 @@
 import { getRegion } from "@pulumi/aws";
-import { InternetGateway, RouteTable, RouteTableAssociation, Subnet, Vpc } from "@pulumi/aws/ec2";
+import { InternetGateway, MainRouteTableAssociation, RouteTable, RouteTableAssociation, Subnet, Vpc } from "@pulumi/aws/ec2";
 import { getStack } from "@pulumi/pulumi";
 import { convertPulumiOutputs } from "./utilities";
 
@@ -73,5 +73,13 @@ export async function createRouteTableAssociation(routeTable: RouteTable, subnet
     return new RouteTableAssociation(`${subnetUrn} -> ${routeTableUrn}`, {
         routeTableId: routeTable.id,
         subnetId: subnet.id
+    });
+}
+
+export async function createMainRouteTableAssociation(routeTable: RouteTable, vpc: Vpc): Promise<MainRouteTableAssociation> {
+    const [routeTableName] = await convertPulumiOutputs([routeTable.urn]);
+    return new MainRouteTableAssociation(`${routeTableName} -> main`, {
+        routeTableId: routeTable.id,
+        vpcId: vpc.id
     });
 }

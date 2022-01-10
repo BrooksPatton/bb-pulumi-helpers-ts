@@ -1,4 +1,4 @@
-import { Subnet, RouteTable, RouteTableAssociation } from "@pulumi/aws/ec2";
+import { Subnet, RouteTable, RouteTableAssociation, MainRouteTableAssociation } from "@pulumi/aws/ec2";
 import * as pulumi from "@pulumi/pulumi";
 import { Output } from "@pulumi/pulumi";
 import { MockCallArgs, MockResourceArgs } from "@pulumi/pulumi/runtime";
@@ -7,7 +7,8 @@ import {
     createInternetGateway, 
     createSubnet, 
     createRouteTable,
-    createRouteTableAssociation
+    createRouteTableAssociation,
+    createMainRouteTableAssociation
 } from "../aws";
 import { convertPulumiOutputs } from "../utilities";
 
@@ -313,6 +314,50 @@ describe("aws Pulumi Helpers", () => {
 
         test("the route table association is associated with the provided subnet", () => {
             expect(subnetId).toBe(expectedSubnetId);
+        });
+    });
+
+    describe("associating a route table as the main route table for a vpc", () => {
+        let urn;
+        let routeTableId;
+        let expectedRouteTableId;
+        let vpcId;
+        let expectedVpcId;
+        let routeTableUrn;
+
+        beforeAll(async () => {
+            const vpc = await createVpc();
+            const internetGateway = await createInternetGateway(vpc);
+            const routeTable = await createRouteTable(vpc, internetGateway);
+            const mainRouteTableAssociation = await createMainRouteTableAssociation(routeTable, vpc);
+
+            [
+                urn,
+                routeTableId,
+                expectedRouteTableId,
+                vpcId,
+                expectedVpcId,
+                routeTableUrn
+            ] = await convertPulumiOutputs([
+                mainRouteTableAssociation.urn,
+                mainRouteTableAssociation.routeTableId,
+                routeTable.id,
+                mainRouteTableAssociation.vpcId,
+                vpc.id,
+                routeTable.urn
+            ]);
+        });
+
+        test("main route table association has a good name", () => {
+            expect(urn).toContain(`${routeTableUrn} -> main`);
+        });
+
+        test("the route table is now a main routet table", () => {
+            expect(routeTableId).toBe(expectedRouteTableId);
+        });
+
+        test("the main route table is associated with the provided vpc", () => {
+            expect(vpcId).toBe(expectedVpcId);
         });
     });
 });
