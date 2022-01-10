@@ -28,5 +28,6 @@
   "dependencies": {
     "@pulumi/aws": "^4.33.1",
     "@pulumi/pulumi": "^3.21.1"
-  }
+  },
+  "type": "module"
 }
