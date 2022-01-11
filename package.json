@@ -1,6 +1,6 @@
 {
   "name": "bb-pulumi-helpers-ts",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Helper functions for working with Pulumi using Typescript",
   "main": "index.ts",
   "scripts": {
@@ -28,6 +28,5 @@
   "dependencies": {
     "@pulumi/aws": "^4.33.1",
     "@pulumi/pulumi": "^3.21.1"
-  },
-  "type": "module"
+  }
 }
