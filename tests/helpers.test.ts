@@ -360,4 +360,8 @@ describe("aws Pulumi Helpers", () => {
             expect(vpcId).toBe(expectedVpcId);
         });
     });
+
+    describe("creating an s3 bucket", () => {
+        test.todo("can create an s3 bucket");
+    });
 });
