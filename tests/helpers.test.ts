@@ -8,9 +8,12 @@ import {
     createSubnet, 
     createRouteTable,
     createRouteTableAssociation,
-    createMainRouteTableAssociation
-} from "../aws";
+    createMainRouteTableAssociation,
+    S3BucketTypes
+} from "../aws/aws";
+import {createS3Bucket} from "../aws/s3";
 import { convertPulumiOutputs } from "../utilities";
+import s3WebPolicy from "./s3-web-policy";
 
 const region = "test-region";
 const stack = "test-stack";
@@ -362,6 +365,36 @@ describe("aws Pulumi Helpers", () => {
     });
 
     describe("creating an s3 bucket", () => {
-        test.todo("can create an s3 bucket");
+        describe("for web hosting", () => {
+            let urn;
+            const websiteName = "my-website";
+            let acl;
+            let policy;
+
+            beforeAll(async () => {
+                const pulumiS3 = await createS3Bucket(websiteName, S3BucketTypes.public);
+                [
+                    urn,
+                    acl,
+                    policy
+                ] = await convertPulumiOutputs([
+                    pulumiS3.urn,
+                    pulumiS3.acl,
+                    pulumiS3.policy
+                ]);
+            });
+
+            test("the s3 bucket has a good name", () => {
+                expect(urn).toContain(`${websiteName}`);
+            });
+
+            test("the bucket should be public", () => {
+                expect(acl).toBe("public-read");
+            });
+
+            test("the policy should be", () => {
+                expect(policy).toEqual(s3WebPolicy);
+            });
+        });
     });
 });

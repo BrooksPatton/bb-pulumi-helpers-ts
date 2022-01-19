@@ -4,7 +4,8 @@
   "description": "Helper functions for working with Pulumi using Typescript",
   "main": "index.ts",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "dev": "jest --watch"
   },
   "repository": {
     "type": "git",

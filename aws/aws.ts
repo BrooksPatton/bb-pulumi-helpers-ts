@@ -1,7 +1,12 @@
-import { getRegion } from "@pulumi/aws";
+import { getRegion, s3 } from "@pulumi/aws";
 import { InternetGateway, MainRouteTableAssociation, RouteTable, RouteTableAssociation, Subnet, Vpc } from "@pulumi/aws/ec2";
+import { Bucket } from "@pulumi/aws/s3";
 import { getStack } from "@pulumi/pulumi";
-import { convertPulumiOutputs } from "./utilities";
+import { convertPulumiOutputs } from "../utilities";
+
+export enum S3BucketTypes {
+    "public" = "public-read"
+}
 
 const createdByTag = "Pulumi";
 
