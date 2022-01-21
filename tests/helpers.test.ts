@@ -393,7 +393,7 @@ describe("aws Pulumi Helpers", () => {
             });
 
             test("the policy should be", () => {
-                expect(policy).toEqual(s3WebPolicy);
+                expect(policy).toEqual(JSON.stringify(s3WebPolicy));
             });
         });
     });
